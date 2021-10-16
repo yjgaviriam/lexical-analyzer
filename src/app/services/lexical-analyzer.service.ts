@@ -17,6 +17,11 @@ export class LexicalAnalyzerService {
   public static MAX_CHARACTER_IDENTIFIERS = 10;
 
   /**
+   * These are only reserved words in our language
+   */
+  public static RESERVED_WORDS = ['continue', 'break', 'return', 'private', 'public'];
+
+  /**
    * Current char
    */
   private currentCharacter: string;
@@ -129,6 +134,14 @@ export class LexicalAnalyzerService {
       if (this.isCharacter()) { continue; }
 
       if (this.isString()) { continue; }
+
+      if (this.isGroupers()) { continue; }
+
+      if (this.isPointOperator()) { continue; }
+
+      if (this.isTwoPointsOperator()) { continue; }
+
+      if (this.isCommaOperator()) { continue; }
 
       this.saveToken(this.currentCharacter, Category.UNKNOWN, this.currentRow, this.currentColumn);
       this.getNextCharacter();
@@ -274,6 +287,17 @@ export class LexicalAnalyzerService {
     return false;
   }
 
+  private isCommaOperator(): boolean {
+
+    if (this.currentCharacter === '§') {
+      this.saveToken(this.currentCharacter, Category.COMMA_OPERATOR, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    }
+
+    return false;
+  }
+
   private isDecimal(): boolean {
 
     if (this.currentCharacter === '.' || this.regularExpressionsService.isDigit(this.currentCharacter)) {
@@ -362,7 +386,7 @@ export class LexicalAnalyzerService {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
 
-        this.saveToken(lexeme, Category.DIFFERENT_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.RELATIONAL_OPERATOR, initialRow, initialColumn);
         return true;
       } else {
         this.restartReading(initialPosition, initialRow, initialColumn);
@@ -387,7 +411,7 @@ export class LexicalAnalyzerService {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       } else {
-        this.saveToken(lexeme, Category.DIVISION_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ARITHMETIC_OPERATOR, initialRow, initialColumn);
         return true;
       }
     }
@@ -409,7 +433,7 @@ export class LexicalAnalyzerService {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
 
-        this.saveToken(lexeme, Category.DIVISION_ASSIGNMENT_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ASSIGNMENT_OPERATOR, initialRow, initialColumn);
         return true;
       } else {
         this.restartReading(initialPosition, initialRow, initialColumn);
@@ -446,13 +470,44 @@ export class LexicalAnalyzerService {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
 
-        this.saveToken(lexeme, Category.EQUALS_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.RELATIONAL_OPERATOR, initialRow, initialColumn);
         return true;
       } else {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       }
 
+    }
+
+    return false;
+  }
+
+  private isGroupers(): boolean {
+
+    if (this.currentCharacter === '{') {
+      this.saveToken(this.currentCharacter, Category.LEFT_BRACE, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    } else if (this.currentCharacter === '[') {
+      this.saveToken(this.currentCharacter, Category.LEFT_BRACKET, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    } else if (this.currentCharacter === '(') {
+      this.saveToken(this.currentCharacter, Category.LEFT_PARENTHESIS, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    } else if (this.currentCharacter === '}') {
+      this.saveToken(this.currentCharacter, Category.RIGHT_BRACE, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    } else if (this.currentCharacter === ']') {
+      this.saveToken(this.currentCharacter, Category.RIGHT_BRACKET, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    } else if (this.currentCharacter === ')') {
+      this.saveToken(this.currentCharacter, Category.RIGHT_PARENTHESIS, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
     }
 
     return false;
@@ -465,24 +520,22 @@ export class LexicalAnalyzerService {
       let lexeme = this.currentCharacter;
       const initialRow = this.currentRow;
       const initialColumn = this.currentColumn;
-      const initialPosition = this.currentPosition;
 
       this.getNextCharacter();
 
-      while (this.regularExpressionsService.isLetter(this.currentCharacter) ||
-        this.regularExpressionsService.isDigit(this.currentCharacter)) {
-
+      while ((this.regularExpressionsService.isLetter(this.currentCharacter) ||
+        this.regularExpressionsService.isDigit(this.currentCharacter)) &&
+        (lexeme.length < LexicalAnalyzerService.MAX_CHARACTER_IDENTIFIERS)) {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
-
-        if (lexeme.length > LexicalAnalyzerService.MAX_CHARACTER_IDENTIFIERS) {
-          this.restartReading(initialPosition, initialRow, initialColumn);
-          return false;
-        }
-
       }
 
-      this.saveToken(lexeme, Category.IDENTIFIER, initialRow, initialColumn);
+      this.saveToken(
+        lexeme,
+        LexicalAnalyzerService.RESERVED_WORDS.includes(lexeme) ? Category.RESERVED_WORD : Category.IDENTIFIER,
+        initialRow,
+        initialColumn,
+      );
       return true;
     }
 
@@ -576,7 +629,7 @@ export class LexicalAnalyzerService {
 
   private isLogicOperator(): boolean {
 
-    if (this.currentCharacter === 'ÿ' || this.currentCharacter === 'Ö') {
+    if (this.currentCharacter === 'ÿ' || this.currentCharacter === 'Ö' || this.currentCharacter === '^') {
       this.saveToken(this.currentCharacter, Category.LOGIC_OPERATOR, this.currentRow, this.currentColumn);
       this.getNextCharacter();
       return true;
@@ -600,7 +653,7 @@ export class LexicalAnalyzerService {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       } else {
-        this.saveToken(lexeme, Category.MINOR_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.RELATIONAL_OPERATOR, initialRow, initialColumn);
         return true;
       }
     }
@@ -623,7 +676,7 @@ export class LexicalAnalyzerService {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
 
-        this.saveToken(lexeme, Category.MINOR_OR_EQUAL_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.RELATIONAL_OPERATOR, initialRow, initialColumn);
         return true;
       } else {
         this.restartReading(initialPosition, initialRow, initialColumn);
@@ -649,7 +702,7 @@ export class LexicalAnalyzerService {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       } else {
-        this.saveToken(lexeme, Category.MAJOR_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.RELATIONAL_OPERATOR, initialRow, initialColumn);
         return true;
       }
     }
@@ -672,7 +725,7 @@ export class LexicalAnalyzerService {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
 
-        this.saveToken(lexeme, Category.MAJOR_OR_EQUAL_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.RELATIONAL_OPERATOR, initialRow, initialColumn);
         return true;
       } else {
         this.restartReading(initialPosition, initialRow, initialColumn);
@@ -697,7 +750,7 @@ export class LexicalAnalyzerService {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       } else {
-        this.saveToken(lexeme, Category.MODULO_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ARITHMETIC_OPERATOR, initialRow, initialColumn);
         return true;
       }
     }
@@ -719,7 +772,7 @@ export class LexicalAnalyzerService {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
 
-        this.saveToken(lexeme, Category.MODULO_ASSIGNMENT_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ASSIGNMENT_OPERATOR, initialRow, initialColumn);
         return true;
       } else {
         this.restartReading(initialPosition, initialRow, initialColumn);
@@ -744,7 +797,7 @@ export class LexicalAnalyzerService {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       } else {
-        this.saveToken(lexeme, Category.MULTIPLICATION_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ARITHMETIC_OPERATOR, initialRow, initialColumn);
         return true;
       }
     }
@@ -766,7 +819,7 @@ export class LexicalAnalyzerService {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
 
-        this.saveToken(lexeme, Category.MULTIPLICATION_ASSIGNMENT_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ASSIGNMENT_OPERATOR, initialRow, initialColumn);
         return true;
       } else {
         this.restartReading(initialPosition, initialRow, initialColumn);
@@ -777,9 +830,13 @@ export class LexicalAnalyzerService {
     return false;
   }
 
-  private isReservedWord(): boolean {
+  private isPointOperator(): boolean {
 
-
+    if (this.currentCharacter === '·') {
+      this.saveToken(this.currentCharacter, Category.POINT_OPERATOR, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    }
 
     return false;
   }
@@ -875,7 +932,7 @@ export class LexicalAnalyzerService {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       } else {
-        this.saveToken(lexeme, Category.SUBTRACTION_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ARITHMETIC_OPERATOR, initialRow, initialColumn);
         return true;
       }
     }
@@ -897,7 +954,7 @@ export class LexicalAnalyzerService {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
 
-        this.saveToken(lexeme, Category.SUBTRACTION_ASSIGNMENT_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ASSIGNMENT_OPERATOR, initialRow, initialColumn);
         return true;
       } else {
         this.restartReading(initialPosition, initialRow, initialColumn);
@@ -922,7 +979,7 @@ export class LexicalAnalyzerService {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       } else {
-        this.saveToken(lexeme, Category.SUM_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ARITHMETIC_OPERATOR, initialRow, initialColumn);
         return true;
       }
     }
@@ -944,12 +1001,23 @@ export class LexicalAnalyzerService {
         lexeme += this.currentCharacter;
         this.getNextCharacter();
 
-        this.saveToken(lexeme, Category.SUM_ASSIGNMENT_OPERATOR, initialRow, initialColumn);
+        this.saveToken(lexeme, Category.ASSIGNMENT_OPERATOR, initialRow, initialColumn);
         return true;
       } else {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       }
+    }
+
+    return false;
+  }
+
+  private isTwoPointsOperator(): boolean {
+
+    if (this.currentCharacter === 'æ') {
+      this.saveToken(this.currentCharacter, Category.TWO_POINT_OPERATOR, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
     }
 
     return false;
