@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Token } from '../entities/token';
 import { Category } from '../enums/category';
+import { ReservedWord } from '../enums/reserved-word';
 import { RegularExpressionsService } from './regular-expressions.service';
 
 /**
@@ -15,11 +16,6 @@ export class LexicalAnalyzerService {
    * Max characters for a identifier
    */
   public static MAX_CHARACTER_IDENTIFIERS = 10;
-
-  /**
-   * These are only reserved words in our language
-   */
-  public static RESERVED_WORDS = ['continue', 'break', 'return', 'private', 'public'];
 
   /**
    * Current char
@@ -168,7 +164,7 @@ export class LexicalAnalyzerService {
 
     if (this.currentCharacter === '~') {
 
-      let lexeme = this.currentCharacter;
+      const lexeme = this.currentCharacter;
       const initialRow = this.currentRow;
       const initialColumn = this.currentColumn;
       const initialPosition = this.currentPosition;
@@ -179,9 +175,6 @@ export class LexicalAnalyzerService {
         this.restartReading(initialPosition, initialRow, initialColumn);
         return false;
       } else {
-        lexeme += this.currentCharacter;
-        this.getNextCharacter();
-
         this.saveToken(lexeme, Category.ASSIGNMENT_OPERATOR, initialRow, initialColumn);
         return true;
       }
@@ -532,7 +525,7 @@ export class LexicalAnalyzerService {
 
       this.saveToken(
         lexeme,
-        LexicalAnalyzerService.RESERVED_WORDS.includes(lexeme) ? Category.RESERVED_WORD : Category.IDENTIFIER,
+        (Object.values(ReservedWord) as Array<string>).includes(lexeme) ? Category.RESERVED_WORD : Category.IDENTIFIER,
         initialRow,
         initialColumn,
       );

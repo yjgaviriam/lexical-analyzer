@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
+import { TreeNode } from './entities/node';
 import { LexicalAnalyzerService } from './services/lexical-analyzer.service';
+import { SyntacticAnalyzerService } from './services/syntactic-analyzer.service';
 
 /**
  * Root component
@@ -7,7 +9,7 @@ import { LexicalAnalyzerService } from './services/lexical-analyzer.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
 
@@ -21,19 +23,34 @@ export class AppComponent {
    */
   public commandsExecuted: string[];
 
+  public treeNode: TreeNode[];
+
   /**
    * Class constructor
    *
    * @param lexicalAnalyzerService Service to control logic about lexical analyzer
+   * @param syntacticAnalyzerService Service to control logic about syntactic analyzer
    */
-  constructor(public lexicalAnalyzerService: LexicalAnalyzerService) {
+  constructor(public lexicalAnalyzerService: LexicalAnalyzerService, public syntacticAnalyzerService: SyntacticAnalyzerService) {
     this.commandsExecuted = [];
-    this.commandLine = '';
+    this.commandLine = `StrProject
+      Mut firstVaræ string■
+      InMut secondVaræ decimal■
+      InMut thirdVaræ boolean■
+      InMut nextVaræ int■
+      InMut otherVaræ char■
+      function myFunction(firstParamæ string§ otherParamæ string)æ void {
+        Mut secondVaræ decimal■
+      }
+      function prFunction()æ string {}
+      EndProject
+     `;
+    // remove
     this.executeCommand();
   }
 
   /**
-   * Call function to analyze the lexema
+   * Call function to analyze the lexeme
    */
   public executeCommand(): void {
 
@@ -41,6 +58,8 @@ export class AppComponent {
       this.lexicalAnalyzerService.analyze(`${this.commandLine}\n`);
       this.commandsExecuted.push(this.commandLine);
       this.commandLine = '';
+
+      this.treeNode = this.syntacticAnalyzerService.analyze(this.lexicalAnalyzerService.tokens).getTreeNode();
     }
   }
 }
