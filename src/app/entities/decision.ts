@@ -37,9 +37,9 @@ export class Decision extends Sentence {
     }
 
     const root = new TreeNode('Decisión', []);
-    root.children.push(new TreeNode(`Expresión : ${this.logicExpression}`, []));
+    root.children.push(new TreeNode(`Condición : ${this.logicExpression.getTreeNode()}`, []));
     root.children.push(sentences);
-    root.children.push(otherSentences);
+    if (otherSentences.children.length > 0) { root.children.push(otherSentences); }
     return root;
   }
 }

@@ -5,8 +5,6 @@ import { TreeNode } from './node';
  */
 export class Sentence {
 
-  constructor() { }
-
   public getTreeNode(): TreeNode {
     return new TreeNode('Sentencia', []);
   }

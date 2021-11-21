@@ -83,7 +83,13 @@ export class LexicalAnalyzerService {
 
       if (this.isAssignmentOperator()) { continue; }
 
+      if (this.isLessOperator()) { continue; }
+
+      if (this.isPlusOperator()) { continue; }
+
       if (this.isLogicOperator()) { continue; }
+
+      if (this.isNegationOperator()) { continue; }
 
       if (this.isIncrementOperator()) { continue; }
 
@@ -620,10 +626,43 @@ export class LexicalAnalyzerService {
     return false;
   }
 
+  private isLessOperator(): boolean {
+
+    if (this.currentCharacter === '-') {
+      this.saveToken(this.currentCharacter, Category.LESS_OPERATOR, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    }
+
+    return false;
+  }
+
+  private isPlusOperator(): boolean {
+
+    if (this.currentCharacter === '+') {
+      this.saveToken(this.currentCharacter, Category.PLUS_OPERATOR, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    }
+
+    return false;
+  }
+
   private isLogicOperator(): boolean {
 
     if (this.currentCharacter === 'ÿ' || this.currentCharacter === 'Ö' || this.currentCharacter === '^') {
       this.saveToken(this.currentCharacter, Category.LOGIC_OPERATOR, this.currentRow, this.currentColumn);
+      this.getNextCharacter();
+      return true;
+    }
+
+    return false;
+  }
+
+  private isNegationOperator(): boolean {
+
+    if (this.currentCharacter === '^') {
+      this.saveToken(this.currentCharacter, Category.NEGATION_OPERATOR, this.currentRow, this.currentColumn);
       this.getNextCharacter();
       return true;
     }

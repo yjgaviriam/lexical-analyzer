@@ -33,18 +33,23 @@ export class AppComponent {
    */
   constructor(public lexicalAnalyzerService: LexicalAnalyzerService, public syntacticAnalyzerService: SyntacticAnalyzerService) {
     this.commandsExecuted = [];
-    this.commandLine = `StrProject
-      Mut firstVaræ string■
-      InMut secondVaræ decimal■
-      InMut thirdVaræ boolean■
-      InMut nextVaræ int■
-      InMut otherVaræ char■
-      function myFunction(firstParamæ string§ otherParamæ string)æ void {
-        Mut secondVaræ decimal■
-      }
-      function prFunction()æ string {}
+    this.commandLine = `
+      StrProject
+        Mut firstVaræ string■
+        InMut secondVaræ decimal■
+        InMut thirdVaræ boolean■
+        InMut nextVaræ int■
+        InMut otherVaræ char■
+        function myFunction(firstParamæ string§ otherParamæ string)æ void {
+          Mut secondVaræ decimal■
+          adjust miArregloæ string[]■
+          assignment asignar ~ arit +45■
+        }
+        function prFunction()æ string {
+          Mut secondVaræ decimal■
+        }
       EndProject
-     `;
+    `;
     // remove
     this.executeCommand();
   }
@@ -59,7 +64,10 @@ export class AppComponent {
       this.commandsExecuted.push(this.commandLine);
       this.commandLine = '';
 
-      this.treeNode = this.syntacticAnalyzerService.analyze(this.lexicalAnalyzerService.tokens).getTreeNode();
+      this.treeNode = this.syntacticAnalyzerService.analyze(this.lexicalAnalyzerService.tokens)?.getTreeNode() ?? [];
+
+      console.log(this.treeNode, this.syntacticAnalyzerService.errors);
+
     }
   }
 }

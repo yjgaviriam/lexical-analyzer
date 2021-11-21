@@ -1,3 +1,5 @@
+import { Token } from './token';
+
 /**
  * OurError representation
  */
@@ -5,8 +7,11 @@ export class OurError {
 
   public message: string;
 
-  constructor(message: string) {
+  public token: Token;
+
+  constructor(message: string, token: Token) {
     this.message = message;
+    this.token = token;
   }
 
   public toString(): string {
