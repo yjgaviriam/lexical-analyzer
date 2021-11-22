@@ -378,7 +378,6 @@ export class SyntacticAnalyzerService {
 
       if (this.currentToken.category === Category.IDENTIFIER) {
         const identifier = this.currentToken;
-
         this.getNextToken();
 
         if (this.currentToken.category === Category.ARITHMETIC_OPERATOR) {
