@@ -40,13 +40,30 @@ export class AppComponent {
         InMut thirdVaræ boolean■
         InMut nextVaræ int■
         InMut otherVaræ char■
+
         function myFunction(firstParamæ string§ otherParamæ string)æ void {
           Mut secondVaræ decimal■
-          adjust miArregloæ string[]■
           assignment asignar ~ arit +45■
+          adjust miArregloæ string[]■
         }
+
         function prFunction()æ string {
           Mut secondVaræ decimal■
+          cycle(log true) {
+            read line■
+            print line■
+            up var¡¡■
+            down var!!■
+            adjust miArregloæ string[]■
+          }
+
+          when(log true) {
+            adjust miArregloæ string[]■
+            originate myFunction(a§ b)■
+            originate test()■
+          }
+
+          turn miRetorno■
         }
       EndProject
     `;
@@ -65,9 +82,6 @@ export class AppComponent {
       this.commandLine = '';
 
       this.treeNode = this.syntacticAnalyzerService.analyze(this.lexicalAnalyzerService.tokens)?.getTreeNode() ?? [];
-
-      console.log(this.treeNode, this.syntacticAnalyzerService.errors);
-
     }
   }
 }

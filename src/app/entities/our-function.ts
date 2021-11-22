@@ -29,7 +29,7 @@ export class OurFunction {
 
   public getTreeNode(): TreeNode {
 
-    const params = new TreeNode('Parámetros', []);
+    const params = new TreeNode('Argumentos', []);
 
     for (const param of this.listParams) {
       params.children.push(param.getTreeNode());

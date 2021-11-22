@@ -18,6 +18,6 @@ export class Param {
   }
 
   public toString(): string {
-    return `Parámetro (${this.identifier}: ${this.dataType})`;
+    return `Argumento (${this.identifier}: ${this.dataType})`;
   }
 }

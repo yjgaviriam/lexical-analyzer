@@ -3,9 +3,9 @@ import { Sentence } from './sentence';
 import { Token } from './token';
 
 /**
- * Return representation
+ * Increase representation
  */
-export class Return extends Sentence {
+export class Increase extends Sentence {
 
   public identifier: Token;
 
@@ -15,6 +15,6 @@ export class Return extends Sentence {
   }
 
   public getTreeNode(): TreeNode {
-    return new TreeNode(`Retorno: ${this.identifier.lexeme}`, []);
+    return new TreeNode(`Incremento: ${this.identifier.lexeme}`, []);
   }
 }

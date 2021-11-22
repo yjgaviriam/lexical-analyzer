@@ -15,7 +15,7 @@ export class LogicExpression extends Expression {
   }
 
   public getTreeNode(): TreeNode {
-    const root = new TreeNode(`Expresión Lógica: ${this.valueOperator}`, []);
+    const root = new TreeNode(`Expresión Lógica: ${this.valueOperator.lexeme}`, []);
     return root;
   }
 }

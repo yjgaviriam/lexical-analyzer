@@ -1,20 +1,22 @@
 import { TreeNode } from './node';
-import { Sentence } from './sentence';
 import { Token } from './token';
 
 /**
- * Return representation
+ * Argument representation
  */
-export class Return extends Sentence {
+export class Argument {
 
   public identifier: Token;
 
   constructor(identifier: Token) {
-    super();
     this.identifier = identifier;
   }
 
   public getTreeNode(): TreeNode {
-    return new TreeNode(`Retorno: ${this.identifier.lexeme}`, []);
+    return new TreeNode(`${this.identifier.lexeme}`, []);
+  }
+
+  public toString(): string {
+    return `Parámetro (${this.identifier})`;
   }
 }

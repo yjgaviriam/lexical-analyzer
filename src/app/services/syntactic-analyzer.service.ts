@@ -24,6 +24,9 @@ import { Category } from '../enums/category';
 import { Message } from '../enums/message';
 import { ReservedWord } from '../enums/reserved-word';
 import { LexicalAnalyzerService } from './lexical-analyzer.service';
+import { Argument } from '../entities/argument';
+import { Increase } from '../entities/increase';
+import { Decrement } from '../entities/decrement';
 
 @Injectable({
   providedIn: 'root',
@@ -41,7 +44,7 @@ export class SyntacticAnalyzerService {
 
   private tokens: Token[];
 
-  constructor(private lexicalAnalyzerService: LexicalAnalyzerService) { }
+  constructor() { }
 
   public analyze(tokens: Token[]): CompilationUnit {
     this.currentPosition = 0;
@@ -50,6 +53,23 @@ export class SyntacticAnalyzerService {
     this.currentToken = this.tokens[this.currentPosition];
 
     return this.getCompilationUnit();
+  }
+
+  /**
+   * Verify is <Parametro> ::= Identificador ":" <TipoDato>
+   *
+   * @returns
+   */
+  private getArgument(): Argument {
+
+    if (this.currentToken.category === Category.IDENTIFIER) {
+      const name = this.currentToken;
+      this.getNextToken();
+      return new Argument(name);
+
+    }
+
+    return null;
   }
 
   private getArray(): OurArray {
@@ -64,8 +84,6 @@ export class SyntacticAnalyzerService {
 
         if (this.currentToken.category === Category.TWO_POINT_OPERATOR) {
           this.getNextToken();
-
-          console.log(this.currentToken);
 
           const dataType = this.getDataType();
 
@@ -120,8 +138,13 @@ export class SyntacticAnalyzerService {
           const expression = this.getExpression();
 
           if (expression) {
-            this.getNextToken();
-            return new Assignment(identifier, expression);
+
+            if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+              this.getNextToken();
+              return new Assignment(identifier, expression);
+            } else {
+              this.saveError(Message.NOT_FOUND_END_LINE_OPERATOR);
+            }
           } else {
             this.saveError(Message.NOT_FOUND_EXPRESSION);
           }
@@ -160,7 +183,45 @@ export class SyntacticAnalyzerService {
     return null;
   }
 
+  /**
+   * Verify is cycle “(“<ExpresiónLogica>”)” <BloqueSentencias>
+   *
+   * @returns
+   */
   private getCycle(): Cycle {
+
+    if (this.currentToken.category === Category.RESERVED_WORD &&
+      (this.currentToken.lexeme === ReservedWord.CYCLE)) {
+      this.getNextToken();
+
+      if (this.currentToken.category === Category.LEFT_PARENTHESIS) {
+        this.getNextToken();
+
+        const logicExpression = this.getExpressionLogic();
+
+        if (logicExpression) {
+          this.getNextToken();
+
+          if (this.currentToken.category === Category.RIGHT_PARENTHESIS) {
+            this.getNextToken();
+
+            const sentencesBlock = this.getSentencesBlock();
+
+            if (sentencesBlock) {
+              return new Cycle(logicExpression, sentencesBlock);
+            } else {
+              this.saveError(Message.NOT_FOUND_SENTENCES);
+            }
+          } else {
+            this.saveError(Message.NOT_FOUND_RIGHT_PARENTHESIS);
+          }
+        } else {
+          this.saveError(Message.NOT_FOUND_LOGIC_EXPRESSION);
+        }
+      } else {
+        this.saveError(Message.NOT_FOUND_LEFT_PARENTHESIS);
+      }
+    }
 
     return null;
   }
@@ -204,7 +265,6 @@ export class SyntacticAnalyzerService {
             const sentences = this.getSentencesBlock();
 
             if (sentences) {
-              this.getNextToken();
 
               if (this.currentToken.category === Category.RESERVED_WORD &&
                 (this.currentToken.lexeme === ReservedWord.OTHER)) {
@@ -316,11 +376,8 @@ export class SyntacticAnalyzerService {
       (this.currentToken.lexeme === ReservedWord.ARIT)) {
       this.getNextToken();
 
-      console.log('curren', this.currentToken);
-
       if (this.currentToken.category === Category.IDENTIFIER) {
         const identifier = this.currentToken;
-        console.log('identifier', identifier);
 
         this.getNextToken();
 
@@ -382,6 +439,7 @@ export class SyntacticAnalyzerService {
         }
       }
     }
+
     return null;
   }
 
@@ -391,6 +449,10 @@ export class SyntacticAnalyzerService {
   }
 
   private getExpressionString(): StringExpression {
+
+    // if (this.currentToken.category === ) {
+
+    // }
 
     return null;
   }
@@ -454,8 +516,88 @@ export class SyntacticAnalyzerService {
     return null;
   }
 
+  /**
+   * Verify is <InvocacionFuncion> ::= originate <identificador> “(“<ListaArgumentos>?”)”
+   *
+   * @returns
+   */
   private getFunctionInvocation(): FunctionInvocation {
+
+    if (this.currentToken.category === Category.RESERVED_WORD &&
+      (this.currentToken.lexeme === ReservedWord.ORIGINATE)) {
+      this.getNextToken();
+
+      if (this.currentToken.category === Category.IDENTIFIER) {
+        const identifier = this.currentToken;
+        this.getNextToken();
+
+        if (this.currentToken.category === Category.LEFT_PARENTHESIS) {
+          this.getNextToken();
+
+          const args = this.getListArguments();
+
+          if (args.length > 0) {
+
+            if (this.currentToken.category === Category.RIGHT_PARENTHESIS) {
+              this.getNextToken();
+
+              if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+                this.getNextToken();
+                return new FunctionInvocation(identifier, args);
+              } else {
+                this.saveError(Message.NOT_FOUND_END_LINE_OPERATOR);
+              }
+            } else {
+              this.saveError(Message.NOT_FOUND_RIGHT_PARENTHESIS);
+            }
+          } else if (this.currentToken.category === Category.RIGHT_PARENTHESIS) {
+            this.getNextToken();
+
+            if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+              this.getNextToken();
+              return new FunctionInvocation(identifier, args);
+            } else {
+              this.saveError(Message.NOT_FOUND_END_LINE_OPERATOR);
+            }
+          } else {
+            this.saveError(Message.NOT_FOUND_RIGHT_PARENTHESIS);
+          }
+        } else {
+          this.saveError(Message.NOT_FOUND_LEFT_PARENTHESIS);
+        }
+      } else {
+        this.saveError(Message.NOT_FOUND_IDENTIFIER);
+      }
+    }
+
     return null;
+  }
+
+  private getListArguments(): Argument[] {
+
+    let argument = this.getArgument();
+    const listArguments: Argument[] = [];
+
+    while (argument != null && this.currentToken.category !== Category.RIGHT_PARENTHESIS) {
+
+      listArguments.push(argument);
+
+      if (this.currentToken.category === Category.COMMA_OPERATOR) {
+        this.getNextToken();
+
+        argument = this.getArgument();
+
+        if (argument === null) {
+          this.saveError(Message.NOT_FOUND_NEXT_PARAM);
+          break;
+        }
+      } else {
+        this.saveError(Message.NOT_FOUND_NEXT_PARAM);
+        break;
+      }
+    }
+
+    return listArguments;
   }
 
   private getListDeclarations(): Declaration[] {
@@ -589,14 +731,79 @@ export class SyntacticAnalyzerService {
   }
 
   private getPrint(): Print {
+
+    if (this.currentToken.category === Category.RESERVED_WORD &&
+      (this.currentToken.lexeme === ReservedWord.PRINT)) {
+      this.getNextToken();
+
+      if (this.currentToken.category === Category.IDENTIFIER) {
+        const identifier = this.currentToken;
+        this.getNextToken();
+
+        if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+          this.getNextToken();
+          return new Print(identifier);
+        } else {
+          this.saveError(Message.NOT_FOUND_END_LINE_OPERATOR);
+        }
+      } else {
+        this.saveError(Message.NOT_FOUND_IDENTIFIER);
+      }
+    }
+
     return null;
   }
 
+  /**
+   * Verify is <LecturaDatos> ::= read <identificador>
+   *
+   * @returns
+   */
   private getRead(): Read {
+
+    if (this.currentToken.category === Category.RESERVED_WORD &&
+      (this.currentToken.lexeme === ReservedWord.READ)) {
+      this.getNextToken();
+
+      if (this.currentToken.category === Category.IDENTIFIER) {
+        const identifier = this.currentToken;
+        this.getNextToken();
+
+        if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+          this.getNextToken();
+          return new Read(identifier);
+        } else {
+          this.saveError(Message.NOT_FOUND_END_LINE_OPERATOR);
+        }
+      } else {
+        this.saveError(Message.NOT_FOUND_IDENTIFIER);
+      }
+    }
+
     return null;
   }
 
   private getReturn(): Return {
+
+    if (this.currentToken.category === Category.RESERVED_WORD &&
+      (this.currentToken.lexeme === ReservedWord.TURN)) {
+      this.getNextToken();
+
+      if (this.currentToken.category === Category.IDENTIFIER) {
+        const identifier = this.currentToken;
+        this.getNextToken();
+
+        if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+          this.getNextToken();
+          return new Return(identifier);
+        } else {
+          this.saveError(Message.NOT_FOUND_END_LINE_OPERATOR);
+        }
+      } else {
+        this.saveError(Message.NOT_FOUND_IDENTIFIER);
+      }
+    }
+
     return null;
   }
 
@@ -644,6 +851,7 @@ export class SyntacticAnalyzerService {
     if (decision) {
       return decision;
     }
+
     const declaration = this.getDeclaration();
 
     if (declaration) {
@@ -674,6 +882,75 @@ export class SyntacticAnalyzerService {
       return ourReturn;
     }
 
+    const decrement = this.getDecrement();
+
+    if (decrement) {
+      return decrement;
+    }
+
+    const increase = this.getIncrease();
+
+    if (increase) {
+      return increase;
+    }
+
+    return null;
+  }
+
+  private getDecrement(): Decrement {
+
+    if (this.currentToken.category === Category.RESERVED_WORD &&
+      (this.currentToken.lexeme === ReservedWord.DOWN)) {
+      this.getNextToken();
+
+      if (this.currentToken.category === Category.IDENTIFIER) {
+        const identifier = this.currentToken;
+        this.getNextToken();
+
+        if (this.currentToken.category === Category.DECREMENT_OPERATOR) {
+          this.getNextToken();
+          if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+            this.getNextToken();
+            return new Decrement(identifier);
+          } else {
+            this.saveError(Message.NOT_FOUND_END_LINE_OPERATOR);
+          }
+        } else {
+          this.saveError(Message.NOT_FOUND_DECREMENT_OPERATOR);
+        }
+      } else {
+        this.saveError(Message.NOT_FOUND_IDENTIFIER);
+      }
+    }
+
+    return null;
+  }
+
+  private getIncrease(): Increase {
+
+    if (this.currentToken.category === Category.RESERVED_WORD &&
+      (this.currentToken.lexeme === ReservedWord.UP)) {
+      this.getNextToken();
+
+      if (this.currentToken.category === Category.IDENTIFIER) {
+        const identifier = this.currentToken;
+        this.getNextToken();
+        if (this.currentToken.category === Category.INCREMENT_OPERATOR) {
+          this.getNextToken();
+          if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+            this.getNextToken();
+            return new Increase(identifier);
+          } else {
+            this.saveError(Message.NOT_FOUND_END_LINE_OPERATOR);
+          }
+        } else {
+          this.saveError(Message.NOT_FOUND_INCREMENT_OPERATOR);
+        }
+      } else {
+        this.saveError(Message.NOT_FOUND_IDENTIFIER);
+      }
+    }
+
     return null;
   }
 
@@ -691,10 +968,9 @@ export class SyntacticAnalyzerService {
 
       if (this.currentToken.category === Category.RIGHT_BRACE) {
         this.getNextToken();
-
         return listSentences;
       } else {
-        this.saveError(Message.NOT_FOUND_RIGHT_PARENTHESIS);
+        this.saveError(Message.NOT_FOUND_RIGHT_BRACE);
       }
     }
 
@@ -703,6 +979,6 @@ export class SyntacticAnalyzerService {
 
   private saveError(message: string): void {
     this.errors.push(new OurError(message, this.currentToken));
-    console.trace()
+    console.trace();
   }
 }
