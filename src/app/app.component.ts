@@ -33,7 +33,41 @@ export class AppComponent {
    */
   constructor(public lexicalAnalyzerService: LexicalAnalyzerService, public syntacticAnalyzerService: SyntacticAnalyzerService) {
     this.commandsExecuted = [];
-    this.commandLine = ``;
+    this.commandLine = `
+      StrProject
+        Mut firstVaræ string■
+        InMut secondVaræ decimal■
+        InMut thirdVaræ boolean■
+        InMut nextVaræ int■
+        InMut otherVaræ char■
+
+        function myFunction(firstParamæ string§ otherParamæ string)æ void {
+          Mut secondVaræ decimal■
+          adjust miArregloæ string[]■
+        }
+
+        function prFunction()æ string {
+          Mut secondVaræ decimal■
+          cycle(log true) {
+            read line■
+            print line■
+            up var¡¡■
+            down var!!■
+            adjust miArregloæ string[]■
+          }
+
+          when(log true) {
+            adjust miArregloæ string[]■
+            originate myFunction(a§ b§ c)■
+            originate test()■
+          }
+
+          turn miRetorno■
+        }
+      EndProject
+    `;
+    // remove
+    this.executeCommand();
   }
 
   /**

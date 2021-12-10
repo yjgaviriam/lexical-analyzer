@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
+import { Argument } from '../entities/argument';
 import { ArithmeticExpression } from '../entities/arithmetic-expression';
 import { Assignment } from '../entities/assignment';
 import { CompilationUnit } from '../entities/compilation-unit';
 import { Cycle } from '../entities/cycle';
 import { Decision } from '../entities/decision';
 import { Declaration } from '../entities/declaration';
+import { Decrement } from '../entities/decrement';
 import { OurError } from '../entities/error';
 import { Expression } from '../entities/expression';
 import { FunctionInvocation } from '../entities/function-invocation';
+import { Increase } from '../entities/increase';
 import { LogicExpression } from '../entities/logic-expression';
 import { NumericValue } from '../entities/numeric-value';
 import { OurArray } from '../entities/our-array';
@@ -23,10 +26,6 @@ import { Token } from '../entities/token';
 import { Category } from '../enums/category';
 import { Message } from '../enums/message';
 import { ReservedWord } from '../enums/reserved-word';
-import { LexicalAnalyzerService } from './lexical-analyzer.service';
-import { Argument } from '../entities/argument';
-import { Increase } from '../entities/increase';
-import { Decrement } from '../entities/decrement';
 
 @Injectable({
   providedIn: 'root',
@@ -62,8 +61,8 @@ export class SyntacticAnalyzerService {
    */
   private getArgument(): Argument {
 
-    if (this.currentToken.category === Category.IDENTIFIER) {
-      const name = this.currentToken;
+    if (this._currentToken().category === Category.IDENTIFIER) {
+      const name = this._currentToken();
       this.getNextToken();
       return new Argument(name);
 
@@ -74,15 +73,15 @@ export class SyntacticAnalyzerService {
 
   private getArray(): OurArray {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      this.currentToken.lexeme === ReservedWord.ADJUST) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      this._currentToken().lexeme === ReservedWord.ADJUST) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const nameDeclaration = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const nameDeclaration = this._currentToken();
         this.getNextToken();
 
-        if (this.currentToken.category === Category.TWO_POINT_OPERATOR) {
+        if (this._currentToken().category === Category.TWO_POINT_OPERATOR) {
           this.getNextToken();
 
           const dataType = this.getDataType();
@@ -90,13 +89,13 @@ export class SyntacticAnalyzerService {
           if (dataType !== null) {
             this.getNextToken();
 
-            if (this.currentToken.category === Category.LEFT_BRACKET) {
+            if (this._currentToken().category === Category.LEFT_BRACKET) {
               this.getNextToken();
 
-              if (this.currentToken.category === Category.RIGHT_BRACKET) {
+              if (this._currentToken().category === Category.RIGHT_BRACKET) {
                 this.getNextToken();
 
-                if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+                if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
                   this.getNextToken();
                   return new OurArray(nameDeclaration, dataType);
                 } else {
@@ -124,22 +123,22 @@ export class SyntacticAnalyzerService {
 
   private getAssignment(): Assignment {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.ASSIGNMENT)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.ASSIGNMENT)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const identifier = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const identifier = this._currentToken();
         this.getNextToken();
 
-        if (this.currentToken.category === Category.ASSIGNMENT_OPERATOR) {
+        if (this._currentToken().category === Category.ASSIGNMENT_OPERATOR) {
           this.getNextToken();
 
           const expression = this.getExpression();
 
           if (expression) {
 
-            if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+            if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
               this.getNextToken();
               return new Assignment(identifier, expression);
             } else {
@@ -166,7 +165,7 @@ export class SyntacticAnalyzerService {
    */
   private getCompilationUnit(): CompilationUnit {
 
-    if (this.currentToken.category === Category.RESERVED_WORD && this.currentToken.lexeme === ReservedWord.START_PROJECT) {
+    if (this._currentToken().category === Category.RESERVED_WORD && this._currentToken().lexeme === ReservedWord.START_PROJECT) {
       this.getNextToken();
 
       const listDeclarations = this.getListDeclarations();
@@ -190,11 +189,11 @@ export class SyntacticAnalyzerService {
    */
   private getCycle(): Cycle {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.CYCLE)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.CYCLE)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.LEFT_PARENTHESIS) {
+      if (this._currentToken().category === Category.LEFT_PARENTHESIS) {
         this.getNextToken();
 
         const logicExpression = this.getExpressionLogic();
@@ -202,7 +201,7 @@ export class SyntacticAnalyzerService {
         if (logicExpression) {
           this.getNextToken();
 
-          if (this.currentToken.category === Category.RIGHT_PARENTHESIS) {
+          if (this._currentToken().category === Category.RIGHT_PARENTHESIS) {
             this.getNextToken();
 
             const sentencesBlock = this.getSentencesBlock();
@@ -233,12 +232,12 @@ export class SyntacticAnalyzerService {
    */
   private getDataType(): Token {
 
-    if (this.currentToken.category === Category.RESERVED_WORD) {
+    if (this._currentToken().category === Category.RESERVED_WORD) {
 
-      if (this.currentToken.lexeme === ReservedWord.BOOLEAN || this.currentToken.lexeme === ReservedWord.CHAR ||
-        this.currentToken.lexeme === ReservedWord.DECIMAL || this.currentToken.lexeme === ReservedWord.INT ||
-        this.currentToken.lexeme === ReservedWord.STRING) {
-        return this.currentToken;
+      if (this._currentToken().lexeme === ReservedWord.BOOLEAN || this._currentToken().lexeme === ReservedWord.CHAR ||
+        this._currentToken().lexeme === ReservedWord.DECIMAL || this._currentToken().lexeme === ReservedWord.INT ||
+        this._currentToken().lexeme === ReservedWord.STRING) {
+        return this._currentToken();
       }
     }
 
@@ -247,11 +246,11 @@ export class SyntacticAnalyzerService {
 
   private getDecision(): Decision {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.WHEN)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.WHEN)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.LEFT_PARENTHESIS) {
+      if (this._currentToken().category === Category.LEFT_PARENTHESIS) {
         this.getNextToken();
 
         const logicExpression = this.getExpressionLogic();
@@ -259,15 +258,15 @@ export class SyntacticAnalyzerService {
         if (logicExpression) {
           this.getNextToken();
 
-          if (this.currentToken.category === Category.RIGHT_PARENTHESIS) {
+          if (this._currentToken().category === Category.RIGHT_PARENTHESIS) {
             this.getNextToken();
 
             const sentences = this.getSentencesBlock();
 
             if (sentences) {
 
-              if (this.currentToken.category === Category.RESERVED_WORD &&
-                (this.currentToken.lexeme === ReservedWord.OTHER)) {
+              if (this._currentToken().category === Category.RESERVED_WORD &&
+                (this._currentToken().lexeme === ReservedWord.OTHER)) {
                 this.getNextToken();
 
                 const otherSentences = this.getSentencesBlock();
@@ -304,16 +303,16 @@ export class SyntacticAnalyzerService {
    */
   private getDeclaration(): Declaration {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.MUTABLE || this.currentToken.lexeme === ReservedWord.IMMUTABLE)) {
-      const type = this.currentToken;
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.MUTABLE || this._currentToken().lexeme === ReservedWord.IMMUTABLE)) {
+      const type = this._currentToken();
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const nameDeclaration = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const nameDeclaration = this._currentToken();
         this.getNextToken();
 
-        if (this.currentToken.category === Category.TWO_POINT_OPERATOR) {
+        if (this._currentToken().category === Category.TWO_POINT_OPERATOR) {
           this.getNextToken();
 
           const dataType = this.getDataType();
@@ -321,7 +320,7 @@ export class SyntacticAnalyzerService {
           if (dataType !== null) {
             this.getNextToken();
 
-            if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+            if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
               this.getNextToken();
               return new Declaration(nameDeclaration, dataType, type);
             } else {
@@ -372,20 +371,20 @@ export class SyntacticAnalyzerService {
 
   private getExpressionArithmetic(): ArithmeticExpression {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.ARIT)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.ARIT)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const identifier = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const identifier = this._currentToken();
         this.getNextToken();
 
-        if (this.currentToken.category === Category.ARITHMETIC_OPERATOR) {
-          const operator = this.currentToken;
+        if (this._currentToken().category === Category.ARITHMETIC_OPERATOR) {
+          const operator = this._currentToken();
           this.getNextToken();
 
-          if (this.currentToken.category === Category.IDENTIFIER) {
-            const secondIdentifier = this.currentToken;
+          if (this._currentToken().category === Category.IDENTIFIER) {
+            const secondIdentifier = this._currentToken();
             this.getNextToken();
 
             return new ArithmeticExpression(identifier, operator, secondIdentifier);
@@ -413,25 +412,25 @@ export class SyntacticAnalyzerService {
 
   private getExpressionLogic(): LogicExpression {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.LOG)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.LOG)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.NEGATION_OPERATOR) {
+      if (this._currentToken().category === Category.NEGATION_OPERATOR) {
         this.getNextToken();
 
-        if (this.currentToken.category === Category.RESERVED_WORD &&
-          (this.currentToken.lexeme === ReservedWord.FALSE || this.currentToken.lexeme === ReservedWord.TRUE)) {
-          const valueOperator = this.currentToken;
+        if (this._currentToken().category === Category.RESERVED_WORD &&
+          (this._currentToken().lexeme === ReservedWord.FALSE || this._currentToken().lexeme === ReservedWord.TRUE)) {
+          const valueOperator = this._currentToken();
           return new LogicExpression(valueOperator);
         } else {
           this.saveError(Message.NOT_FOUND_LOGIC_VALUE);
         }
       } else {
 
-        if (this.currentToken.category === Category.RESERVED_WORD &&
-          (this.currentToken.lexeme === ReservedWord.FALSE || this.currentToken.lexeme === ReservedWord.TRUE)) {
-          const valueOperator = this.currentToken;
+        if (this._currentToken().category === Category.RESERVED_WORD &&
+          (this._currentToken().lexeme === ReservedWord.FALSE || this._currentToken().lexeme === ReservedWord.TRUE)) {
+          const valueOperator = this._currentToken();
           return new LogicExpression(valueOperator);
         } else {
           this.saveError(Message.NOT_FOUND_LOGIC_VALUE);
@@ -449,7 +448,7 @@ export class SyntacticAnalyzerService {
 
   private getExpressionString(): StringExpression {
 
-    // if (this.currentToken.category === ) {
+    // if (this._currentToken().category === ) {
 
     // }
 
@@ -463,24 +462,24 @@ export class SyntacticAnalyzerService {
    */
   private getFunction(): OurFunction {
 
-    if (this.currentToken.category === Category.RESERVED_WORD && this.currentToken.lexeme === ReservedWord.FUNCTION) {
+    if (this._currentToken().category === Category.RESERVED_WORD && this._currentToken().lexeme === ReservedWord.FUNCTION) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
+      if (this._currentToken().category === Category.IDENTIFIER) {
 
-        const functionName = this.currentToken;
+        const functionName = this._currentToken();
 
         this.getNextToken();
 
-        if (this.currentToken.category === Category.LEFT_PARENTHESIS) {
+        if (this._currentToken().category === Category.LEFT_PARENTHESIS) {
           this.getNextToken();
 
           const params = this.getListParams();
 
-          if (this.currentToken.category === Category.RIGHT_PARENTHESIS) {
+          if (this._currentToken().category === Category.RIGHT_PARENTHESIS) {
             this.getNextToken();
 
-            if (this.currentToken.category === Category.TWO_POINT_OPERATOR) {
+            if (this._currentToken().category === Category.TWO_POINT_OPERATOR) {
               this.getNextToken();
 
               const returnType = this.getReturnType();
@@ -522,25 +521,25 @@ export class SyntacticAnalyzerService {
    */
   private getFunctionInvocation(): FunctionInvocation {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.ORIGINATE)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.ORIGINATE)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const identifier = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const identifier = this._currentToken();
         this.getNextToken();
 
-        if (this.currentToken.category === Category.LEFT_PARENTHESIS) {
+        if (this._currentToken().category === Category.LEFT_PARENTHESIS) {
           this.getNextToken();
 
           const args = this.getListArguments();
 
           if (args.length > 0) {
 
-            if (this.currentToken.category === Category.RIGHT_PARENTHESIS) {
+            if (this._currentToken().category === Category.RIGHT_PARENTHESIS) {
               this.getNextToken();
 
-              if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+              if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
                 this.getNextToken();
                 return new FunctionInvocation(identifier, args);
               } else {
@@ -549,10 +548,10 @@ export class SyntacticAnalyzerService {
             } else {
               this.saveError(Message.NOT_FOUND_RIGHT_PARENTHESIS);
             }
-          } else if (this.currentToken.category === Category.RIGHT_PARENTHESIS) {
+          } else if (this._currentToken().category === Category.RIGHT_PARENTHESIS) {
             this.getNextToken();
 
-            if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+            if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
               this.getNextToken();
               return new FunctionInvocation(identifier, args);
             } else {
@@ -577,11 +576,11 @@ export class SyntacticAnalyzerService {
     let argument = this.getArgument();
     const listArguments: Argument[] = [];
 
-    while (argument != null && this.currentToken.category !== Category.RIGHT_PARENTHESIS) {
+    while (argument != null && this._currentToken().category !== Category.RIGHT_PARENTHESIS) {
 
       listArguments.push(argument);
 
-      if (this.currentToken.category === Category.COMMA_OPERATOR) {
+      if (this._currentToken().category === Category.COMMA_OPERATOR) {
         this.getNextToken();
 
         argument = this.getArgument();
@@ -635,11 +634,11 @@ export class SyntacticAnalyzerService {
     let param = this.getParam();
     const listParams: Param[] = [];
 
-    while (param != null && this.currentToken.category !== Category.RIGHT_PARENTHESIS) {
+    while (param != null && this._currentToken().category !== Category.RIGHT_PARENTHESIS) {
 
       listParams.push(param);
 
-      if (this.currentToken.category === Category.COMMA_OPERATOR) {
+      if (this._currentToken().category === Category.COMMA_OPERATOR) {
         this.getNextToken();
         param = this.getParam();
 
@@ -686,13 +685,13 @@ export class SyntacticAnalyzerService {
 
     let sign: Token = null;
 
-    if (this.currentToken.category === Category.LESS_OPERATOR || this.currentToken.category === Category.PLUS_OPERATOR) {
-      sign = this.currentToken;
+    if (this._currentToken().category === Category.LESS_OPERATOR || this._currentToken().category === Category.PLUS_OPERATOR) {
+      sign = this._currentToken();
       this.getNextToken();
     }
-    if (this.currentToken.category === Category.INTEGER || this.currentToken.category === Category.DECIMAL ||
-      this.currentToken.category === Category.IDENTIFIER) {
-      const value = this.currentToken;
+    if (this._currentToken().category === Category.INTEGER || this._currentToken().category === Category.DECIMAL ||
+      this._currentToken().category === Category.IDENTIFIER) {
+      const value = this._currentToken();
       return new NumericValue(sign, value);
     }
 
@@ -706,11 +705,11 @@ export class SyntacticAnalyzerService {
    */
   private getParam(): Param {
 
-    if (this.currentToken.category === Category.IDENTIFIER) {
-      const nameParam = this.currentToken;
+    if (this._currentToken().category === Category.IDENTIFIER) {
+      const nameParam = this._currentToken();
       this.getNextToken();
 
-      if (this.currentToken.category === Category.TWO_POINT_OPERATOR) {
+      if (this._currentToken().category === Category.TWO_POINT_OPERATOR) {
         this.getNextToken();
 
         const datatype = this.getDataType();
@@ -731,15 +730,15 @@ export class SyntacticAnalyzerService {
 
   private getPrint(): Print {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.PRINT)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.PRINT)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const identifier = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const identifier = this._currentToken();
         this.getNextToken();
 
-        if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+        if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
           this.getNextToken();
           return new Print(identifier);
         } else {
@@ -760,15 +759,15 @@ export class SyntacticAnalyzerService {
    */
   private getRead(): Read {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.READ)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.READ)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const identifier = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const identifier = this._currentToken();
         this.getNextToken();
 
-        if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+        if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
           this.getNextToken();
           return new Read(identifier);
         } else {
@@ -784,15 +783,15 @@ export class SyntacticAnalyzerService {
 
   private getReturn(): Return {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.TURN)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.TURN)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const identifier = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const identifier = this._currentToken();
         this.getNextToken();
 
-        if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+        if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
           this.getNextToken();
           return new Return(identifier);
         } else {
@@ -813,12 +812,12 @@ export class SyntacticAnalyzerService {
    */
   private getReturnType(): Token {
 
-    if (this.currentToken.category === Category.RESERVED_WORD) {
+    if (this._currentToken().category === Category.RESERVED_WORD) {
 
-      if (this.currentToken.lexeme === ReservedWord.BOOLEAN || this.currentToken.lexeme === ReservedWord.CHAR ||
-        this.currentToken.lexeme === ReservedWord.DECIMAL || this.currentToken.lexeme === ReservedWord.INT ||
-        this.currentToken.lexeme === ReservedWord.STRING || this.currentToken.lexeme === ReservedWord.VOID) {
-        return this.currentToken;
+      if (this._currentToken().lexeme === ReservedWord.BOOLEAN || this._currentToken().lexeme === ReservedWord.CHAR ||
+        this._currentToken().lexeme === ReservedWord.DECIMAL || this._currentToken().lexeme === ReservedWord.INT ||
+        this._currentToken().lexeme === ReservedWord.STRING || this._currentToken().lexeme === ReservedWord.VOID) {
+        return this._currentToken();
       }
     }
 
@@ -898,17 +897,17 @@ export class SyntacticAnalyzerService {
 
   private getDecrement(): Decrement {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.DOWN)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.DOWN)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const identifier = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const identifier = this._currentToken();
         this.getNextToken();
 
-        if (this.currentToken.category === Category.DECREMENT_OPERATOR) {
+        if (this._currentToken().category === Category.DECREMENT_OPERATOR) {
           this.getNextToken();
-          if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+          if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
             this.getNextToken();
             return new Decrement(identifier);
           } else {
@@ -927,16 +926,16 @@ export class SyntacticAnalyzerService {
 
   private getIncrease(): Increase {
 
-    if (this.currentToken.category === Category.RESERVED_WORD &&
-      (this.currentToken.lexeme === ReservedWord.UP)) {
+    if (this._currentToken().category === Category.RESERVED_WORD &&
+      (this._currentToken().lexeme === ReservedWord.UP)) {
       this.getNextToken();
 
-      if (this.currentToken.category === Category.IDENTIFIER) {
-        const identifier = this.currentToken;
+      if (this._currentToken().category === Category.IDENTIFIER) {
+        const identifier = this._currentToken();
         this.getNextToken();
-        if (this.currentToken.category === Category.INCREMENT_OPERATOR) {
+        if (this._currentToken().category === Category.INCREMENT_OPERATOR) {
           this.getNextToken();
-          if (this.currentToken.category === Category.END_OF_SENTENCE_OPERATOR) {
+          if (this._currentToken().category === Category.END_OF_SENTENCE_OPERATOR) {
             this.getNextToken();
             return new Increase(identifier);
           } else {
@@ -960,12 +959,12 @@ export class SyntacticAnalyzerService {
    */
   private getSentencesBlock(): Sentence[] {
 
-    if (this.currentToken.category === Category.LEFT_BRACE) {
+    if (this._currentToken().category === Category.LEFT_BRACE) {
       this.getNextToken();
 
       const listSentences = this.getListSentences();
 
-      if (this.currentToken.category === Category.RIGHT_BRACE) {
+      if (this._currentToken().category === Category.RIGHT_BRACE) {
         this.getNextToken();
         return listSentences;
       } else {
@@ -977,7 +976,10 @@ export class SyntacticAnalyzerService {
   }
 
   private saveError(message: string): void {
-    this.errors.push(new OurError(message, this.currentToken));
-    console.trace();
+    this.errors.push(new OurError(message, this._currentToken()));
+  }
+
+  private _currentToken(): Token {
+    return this.currentToken;
   }
 }
