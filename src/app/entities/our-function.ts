@@ -1,6 +1,8 @@
+import { Param } from '../entities/param';
 import { TreeNode } from './node';
-import { Param } from './param';
+import { SemanticError } from './semantic-error';
 import { Sentence } from './sentence';
+import { SymbolTable } from './symbol-table';
 import { Token } from './token';
 
 /**
@@ -48,6 +50,27 @@ export class OurFunction {
     root.children.push(sentences);
 
     return root;
+  }
+
+  public analyzeSemantic(symbolTable: SymbolTable, semanticErrors: SemanticError[]): void {
+
+    for (const s of this.listSentences) {
+      s.analyzeSemantic(symbolTable, semanticErrors, this.functionName.lexeme);
+    }
+  }
+
+  public saveSymbolTable(symbolTable: SymbolTable, semanticErrors: SemanticError[], ambit: string): void {
+    symbolTable.saveSymbolFunction(this.functionName.lexeme, this.typeReturn.lexeme, ambit, this.functionName.row,
+      this.functionName.column, this.listParams.map((p: Param) => p.dataType.lexeme));
+
+    for (const p of this.listParams) {
+      symbolTable.saveSymbolValue(p.identifier.lexeme, p.dataType.lexeme, this.functionName.lexeme + ' ' + this.functionName.column,
+        p.identifier.row, p.identifier.column, true);
+    }
+
+    for (const s of this.listSentences) {
+      s.saveSymbolTable(symbolTable, semanticErrors, this.functionName.lexeme + ' ' + this.functionName.column);
+    }
   }
 
   public toString(): string {

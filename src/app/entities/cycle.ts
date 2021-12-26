@@ -1,6 +1,8 @@
 import { LogicExpression } from './logic-expression';
 import { TreeNode } from './node';
+import { SemanticError } from './semantic-error';
 import { Sentence } from './sentence';
+import { SymbolTable } from './symbol-table';
 
 /**
  * Cycle representation
@@ -14,6 +16,22 @@ export class Cycle extends Sentence {
     super();
     this.logicExpression = logicExpression;
     this.listSentences = listSentences;
+  }
+
+  public saveSymbolTable(symbolTable: SymbolTable, semanticErrors: SemanticError[], ambit: string): void {
+
+    for (const s of this.listSentences) {
+      s.saveSymbolTable(symbolTable, semanticErrors, ambit);
+    }
+
+  }
+
+  public analyzeSemantic(symbolTable: SymbolTable, semanticErrors: SemanticError[], ambit: string): void {
+
+    for (const s of this.listSentences) {
+      s.analyzeSemantic(symbolTable, semanticErrors, ambit);
+    }
+
   }
 
   public getTreeNode(): TreeNode {

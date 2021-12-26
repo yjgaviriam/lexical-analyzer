@@ -1,6 +1,8 @@
 import { LogicExpression } from './logic-expression';
 import { TreeNode } from './node';
+import { SemanticError } from './semantic-error';
 import { Sentence } from './sentence';
+import { SymbolTable } from './symbol-table';
 
 /**
  * Decision representation
@@ -18,6 +20,33 @@ export class Decision extends Sentence {
     this.logicExpression = logicExpression;
     this.listSentences = listSentences;
     this.otherListSentences = otherListSentences;
+  }
+
+  public saveSymbolTable(symbolTable: SymbolTable, semanticErrors: SemanticError[], ambit: string): void {
+
+    for (const s of this.listSentences) {
+      s.saveSymbolTable(symbolTable, semanticErrors, ambit);
+    }
+
+    if (this.otherListSentences) {
+      for (const s of this.otherListSentences) {
+        s.saveSymbolTable(symbolTable, semanticErrors, ambit);
+      }
+    }
+
+  }
+
+  public analyzeSemantic(symbolTable: SymbolTable, semanticErrors: SemanticError[], ambit: string): void {
+
+    for (const s of this.listSentences) {
+      s.analyzeSemantic(symbolTable, semanticErrors, ambit);
+    }
+
+    if (this.otherListSentences) {
+      for (const s of this.otherListSentences) {
+        s.analyzeSemantic(symbolTable, semanticErrors, ambit);
+      }
+    }
   }
 
   public getTreeNode(): TreeNode {

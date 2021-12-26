@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { TreeNode } from './entities/node';
 import { LexicalAnalyzerService } from './services/lexical-analyzer.service';
 import { SyntacticAnalyzerService } from './services/syntactic-analyzer.service';
+import { SemanticAnalyzerService } from './services/semantic-analyzer.service';
 
 /**
  * Root component
@@ -31,41 +32,13 @@ export class AppComponent {
    * @param lexicalAnalyzerService Service to control logic about lexical analyzer
    * @param syntacticAnalyzerService Service to control logic about syntactic analyzer
    */
-  constructor(public lexicalAnalyzerService: LexicalAnalyzerService, public syntacticAnalyzerService: SyntacticAnalyzerService) {
+  constructor(
+    public lexicalAnalyzerService: LexicalAnalyzerService,
+    public syntacticAnalyzerService: SyntacticAnalyzerService,
+    public semanticAnalyzerService: SemanticAnalyzerService,
+  ) {
     this.commandsExecuted = [];
-    this.commandLine = `
-      StrProject
-        Mut firstVaræ string■
-        InMut secondVaræ decimal■
-        InMut thirdVaræ boolean■
-        InMut nextVaræ int■
-        InMut otherVaræ char■
-
-        function myFunction(firstParamæ string§ otherParamæ string)æ void {
-          Mut secondVaræ decimal■
-          adjust miArregloæ string[]■
-        }
-
-        function prFunction()æ string {
-          Mut secondVaræ decimal■
-          cycle(log true) {
-            read line■
-            print line■
-            up var¡¡■
-            down var!!■
-            adjust miArregloæ string[]■
-          }
-
-          when(log true) {
-            adjust miArregloæ string[]■
-            originate myFunction(a§ b§ c)■
-            originate test()■
-          }
-
-          turn miRetorno■
-        }
-      EndProject
-    `;
+    this.commandLine = ``;
     // remove
     this.executeCommand();
   }
@@ -77,10 +50,22 @@ export class AppComponent {
 
     if (this.commandLine?.length > 0) {
       this.lexicalAnalyzerService.analyze(`${this.commandLine}\n`);
-      this.commandsExecuted.push(this.commandLine);
+      this.commandsExecuted = [(this.commandLine)];
       this.commandLine = '';
 
-      this.treeNode = this.syntacticAnalyzerService.analyze(this.lexicalAnalyzerService.tokens)?.getTreeNode() ?? [];
+      const compilationUnit = this.syntacticAnalyzerService.analyze(this.lexicalAnalyzerService.tokens);
+
+      if (compilationUnit) {
+        this.treeNode = compilationUnit.getTreeNode();
+        this.semanticAnalyzerService.resetValues();
+        this.semanticAnalyzerService.saveSymbols(compilationUnit);
+        console.log(this.semanticAnalyzerService.symbolTable);
+
+        this.semanticAnalyzerService.analyze(compilationUnit);
+      } else {
+        this.treeNode = [new TreeNode('Unidad de compilación', [])];
+      }
+
     }
   }
 }

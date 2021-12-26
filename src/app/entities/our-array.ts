@@ -1,5 +1,7 @@
 import { TreeNode } from './node';
+import { SemanticError } from './semantic-error';
 import { Sentence } from './sentence';
+import { SymbolTable } from './symbol-table';
 import { Token } from './token';
 
 /**
@@ -14,6 +16,16 @@ export class OurArray extends Sentence {
     super();
     this.nameIdentifier = nameIdentifier;
     this.dataType = dataType;
+  }
+
+  public analyzeSemantic(symbolTable: SymbolTable, semanticErrors: SemanticError[], ambit: string): void {
+
+  }
+
+
+  public saveSymbolTable(symbolTable: SymbolTable, semanticErrors: SemanticError[], ambit: string): void {
+    symbolTable.saveSymbolValue(this.nameIdentifier.lexeme, this.dataType.lexeme, ambit, this.nameIdentifier.row,
+      this.nameIdentifier.column, true);
   }
 
   public getTreeNode(): TreeNode {
